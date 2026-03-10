@@ -1,0 +1,14 @@
+# Generated addon instances (keep template/, ignore generated slugs)
+# Uncomment the next line if you don't want to commit generated addons:
+# */config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

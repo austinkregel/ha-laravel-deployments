@@ -1,0 +1,40 @@
+{
+  "name": "%%NAME%%",
+  "version": "1.0.0",
+  "slug": "%%SLUG%%",
+  "description": "Laravel app on Home Assistant",
+  "arch": ["amd64", "aarch64"],
+  "startup": "application",
+  "boot": "auto",
+  "ingress": true,
+  "ingress_port": 80,
+  "hassio_api": true,
+  "homeassistant_api": true,
+  "map": ["ssl:ro"],
+  "options": {
+    "git_url": "",
+    "git_branch": "main",
+    "db_connection": "sqlite",
+    "db_host": "",
+    "db_port": 3306,
+    "db_database": "",
+    "db_username": "",
+    "db_password": "",
+    "redis_host": "",
+    "redis_port": 6379,
+    "php_memory_limit": "256M"
+  },
+  "schema": {
+    "git_url": "url",
+    "git_branch": "str",
+    "db_connection": "list(sqlite|mysql|mariadb|pgsql)",
+    "db_host": "str",
+    "db_port": "port",
+    "db_database": "str",
+    "db_username": "str",
+    "db_password": "str",
+    "redis_host": "str",
+    "redis_port": "port",
+    "php_memory_limit": "str"
+  }
+}
