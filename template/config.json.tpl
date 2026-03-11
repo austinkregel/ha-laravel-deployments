@@ -22,6 +22,8 @@
     "db_password": "",
     "redis_host": "",
     "redis_port": 6379,
+    "redis_db": 0,
+    "redis_password": "",
     "php_memory_limit": "256M"
   },
   "schema": {
@@ -35,6 +37,8 @@
     "db_password": "str",
     "redis_host": "str",
     "redis_port": "port",
+    "redis_db": "int(0,15)",
+    "redis_password": "str",
     "php_memory_limit": "str"
   }
 }

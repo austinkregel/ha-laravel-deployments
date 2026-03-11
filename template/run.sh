@@ -32,12 +32,15 @@ DB_USERNAME=$(opt db_username)
 DB_PASSWORD=$(opt db_password)
 REDIS_HOST=$(opt redis_host)
 REDIS_PORT=$(opt redis_port)
+REDIS_DB=$(opt redis_db)
+REDIS_PASSWORD=$(opt redis_password)
 PHP_MEMORY_LIMIT=$(opt php_memory_limit)
 
 : "${GIT_BRANCH:=main}"
 : "${DB_CONNECTION:=sqlite}"
 : "${DB_PORT:=3306}"
 : "${REDIS_PORT:=6379}"
+: "${REDIS_DB:=0}"
 : "${PHP_MEMORY_LIMIT:=256M}"
 
 if [ -z "$GIT_URL" ]; then
@@ -171,6 +174,8 @@ DB_PASSWORD=${DB_PASSWORD}
 
 REDIS_HOST=${REDIS_HOST}
 REDIS_PORT=${REDIS_PORT}
+REDIS_PASSWORD=${REDIS_PASSWORD}
+REDIS_DB=${REDIS_DB}
 
 CACHE_STORE=file
 SESSION_DRIVER=file

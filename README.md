@@ -54,6 +54,8 @@ Install the **My App** addon from the store. In its **Configuration** tab, set:
 | `db_password` | Database password |
 | `redis_host` | Redis addon hostname (leave empty to disable) |
 | `redis_port` | Redis port (default: `6379`) |
+| `redis_db` | Redis database number 0-15 (default: `0`) |
+| `redis_password` | Redis password (leave empty if none) |
 | `php_memory_limit` | PHP memory limit (default: `256M`) |
 
 ### 4. Start
