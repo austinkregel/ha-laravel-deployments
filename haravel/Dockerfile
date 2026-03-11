@@ -1,4 +1,5 @@
-FROM ubuntu:24.04
+ARG BUILD_FROM=ubuntu:24.04
+FROM ${BUILD_FROM}
 
 WORKDIR /var/www/html
 
@@ -46,8 +47,13 @@ RUN apt-get install -y \
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin --filename=composer
 
-# Node.js 20 + npm
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+# Node.js 20 + npm (using NodeSource signed repo)
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+       | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+       > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
     && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -67,6 +73,17 @@ RUN chmod +x /opt/ha-laravel/run.sh /opt/ha-laravel/discover.sh
 # Copy the overlay (middleware, provider, config) to a staging area
 COPY overlay/ /opt/ha-laravel/overlay/
 
-EXPOSE 80
+EXPOSE 8099
+
+ARG BUILD_ARCH=amd64
+ARG BUILD_DATE
+ARG BUILD_REF
+ARG BUILD_VERSION
+LABEL \
+  io.hass.name="Haravel Deploy" \
+  io.hass.description="Laravel app on Home Assistant" \
+  io.hass.arch="${BUILD_ARCH}" \
+  io.hass.type="addon" \
+  io.hass.version="${BUILD_VERSION}"
 
 CMD ["/opt/ha-laravel/run.sh"]

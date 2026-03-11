@@ -46,6 +46,9 @@ sed "s/%%SLUG%%/$SLUG/g; s/%%NAME%%/$NAME/g" \
 
 rm "$TARGET_DIR/config.json.tpl"
 
+# Stamp the addon name into Dockerfile labels
+sed -i "s/%%NAME%%/$NAME/g" "$TARGET_DIR/Dockerfile"
+
 echo "Created addon '$NAME' at ./$SLUG/"
 echo "Next steps:"
 echo "  1. Add this repository to Home Assistant"

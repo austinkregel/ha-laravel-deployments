@@ -74,6 +74,7 @@ ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 clone_app() {
   echo "[ha-laravel] Cloning $GIT_URL (branch: $GIT_BRANCH)..."
   rm -rf "$APP_DIR"
+  mkdir -p "$(dirname "$APP_DIR")"
   git clone --branch "$GIT_BRANCH" --depth 1 "$GIT_URL" "$APP_DIR"
   echo "$GIT_URL" > "$DATA_DIR/.git_url"
 }

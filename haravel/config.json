@@ -7,7 +7,7 @@
   "startup": "application",
   "boot": "auto",
   "ingress": true,
-  "ingress_port": 80,
+  "ingress_port": 8099,
   "hassio_api": true,
   "homeassistant_api": true,
   "map": ["ssl:ro"],
@@ -27,18 +27,18 @@
     "php_memory_limit": "256M"
   },
   "schema": {
-    "git_url": "url",
+    "git_url": "url?",
     "git_branch": "str",
     "db_connection": "list(sqlite|mysql|mariadb|pgsql)",
-    "db_host": "str",
+    "db_host": "str?",
     "db_port": "port",
-    "db_database": "str",
-    "db_username": "str",
-    "db_password": "str",
-    "redis_host": "str",
+    "db_database": "str?",
+    "db_username": "str?",
+    "db_password": "str?",
+    "redis_host": "str?",
     "redis_port": "port",
     "redis_db": "int(0,15)",
-    "redis_password": "str",
+    "redis_password": "str?",
     "php_memory_limit": "str"
   }
 }

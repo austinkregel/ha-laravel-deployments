@@ -128,7 +128,7 @@ echo "[discover] Scanning $APP_DIR for services..."
 # ---------------------------------------------------------------------------
 
 if [ -n "$OCTANE" ]; then
-  add_program "octane" "php artisan octane:start --host=0.0.0.0 --port=80"
+  add_program "octane" "php artisan octane:start --host=0.0.0.0 --port=8099"
 else
   add_program_root "php-fpm" "/usr/sbin/php-fpm8.4 --nodaemonize"
   add_program_root "nginx" "/usr/sbin/nginx -g 'daemon off;'"
