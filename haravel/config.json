@@ -1,6 +1,6 @@
 {
   "name": "Haravel Deploy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "slug": "haravel",
   "description": "Laravel app on Home Assistant",
   "arch": ["amd64", "aarch64"],
