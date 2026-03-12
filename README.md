@@ -5,21 +5,29 @@ Home Assistant authentication, service discovery, and multi-instance support.
 
 ## Features
 
-- **Any Laravel app** — provide a git URL and the addon clones, installs, and
+- **Any Laravel app** -- provide a git URL and the addon clones, installs, and
   serves it automatically.
-- **Home Assistant SSO** — users are authenticated via HA's ingress proxy.
+- **Configurable PHP & Node.js** -- choose your PHP version (8.1-8.4) and
+  Node.js version (18, 20, 22) via addon options. Runtimes are compiled via
+  ASDF on first boot and cached for fast restarts.
+- **Selectable PHP extensions** -- pick exactly which extensions to compile
+  (mbstring, gd, redis, pgsql, etc.) from the addon configuration.
+- **Home Assistant SSO** -- users are authenticated via HA's ingress proxy.
   The addon reads `X-Remote-User-*` headers, creates a matching Laravel user,
   and calls `Auth::login()`. No separate login page needed.
-- **Service auto-discovery** — `composer.json` and the app directory structure
+- **Service auto-discovery** -- `composer.json` and the app directory structure
   are scanned at startup to determine which background services are needed
   (Horizon, Reverb, Pulse, Nightwatch, queue workers, scheduler, etc.).
   Only the services the app actually uses are started.
-- **All database drivers** — SQLite, MySQL/MariaDB, and PostgreSQL are all
+- **All database drivers** -- SQLite, MySQL/MariaDB, and PostgreSQL are all
   supported. Point the addon at your HA database addon or use the built-in
   SQLite default.
-- **Multiple instances** — run as many Laravel apps as you want by generating
+- **Multiple instances** -- run as many Laravel apps as you want by generating
   a new addon folder for each one with a unique slug.
-- **Procfile override** — drop a `Procfile` in your Laravel app root to define
+- **Smart code updates** -- on restart, `git fetch && git reset --hard` syncs
+  your app to the latest remote commit. Dependencies are only reinstalled when
+  lockfiles change.
+- **Procfile override** -- drop a `Procfile` in your Laravel app root to define
   your own process layout and skip auto-discovery entirely.
 
 ## Quick Start
@@ -35,7 +43,7 @@ Home Assistant addon.
 
 ### 2. Add the repository to Home Assistant
 
-In Home Assistant, go to **Settings → Add-ons → Add-on Store → ⋮ →
+In Home Assistant, go to **Settings -> Add-ons -> Add-on Store -> ... ->
 Repositories** and add the URL of this git repository.
 
 ### 3. Install and configure
@@ -46,6 +54,9 @@ Install the **My App** addon from the store. In its **Configuration** tab, set:
 |---|---|
 | `git_url` | Git clone URL of your Laravel project |
 | `git_branch` | Branch to clone (default: `main`) |
+| `php_version` | PHP version to install via ASDF (default: `8.4`) |
+| `node_version` | Node.js version to install via ASDF (default: `20`) |
+| `php_extensions` | List of PHP extensions to compile (see defaults below) |
 | `db_connection` | `sqlite`, `mysql`, `mariadb`, or `pgsql` |
 | `db_host` | Database host (ignored for SQLite) |
 | `db_port` | Database port (default: `3306`) |
@@ -58,31 +69,75 @@ Install the **My App** addon from the store. In its **Configuration** tab, set:
 | `redis_password` | Redis password (leave empty if none) |
 | `php_memory_limit` | PHP memory limit (default: `256M`) |
 
+#### Default PHP extensions
+
+```
+mbstring, xml, curl, zip, bcmath, intl, gd, soap, gettext,
+sqlite3, mysql, pgsql, redis, opcache, fpm
+```
+
+Extensions are categorized automatically:
+- **Compile-time** (built into PHP): mbstring, xml, curl, zip, bcmath, intl, gd,
+  soap, gettext, sqlite3, mysql, pgsql, opcache, sodium, fpm, readline, openssl
+- **PECL** (installed after compilation): redis, imagick, xdebug, swoole
+
 ### 4. Start
 
-Start the addon. On first boot it will clone the repo, install Composer and
-npm dependencies, run migrations, and start serving the app behind HA ingress.
+Start the addon. On first boot it will compile PHP and Node.js via ASDF
+(10-40 minutes depending on hardware), clone the repo, install dependencies,
+run migrations, and start serving the app behind HA ingress. Subsequent
+restarts are fast -- runtimes are cached and dependencies are only reinstalled
+when lockfiles change.
 
 ## How Authentication Works
 
 ```
-Browser → HA Supervisor (ingress proxy) → Addon container
-               │
-               ├─ Validates HA session
-               ├─ Injects X-Remote-User-ID header
-               ├─ Injects X-Remote-User-Name header
-               └─ Injects X-Remote-User-Display-Name header
-                                          │
-                                          ▼
+Browser -> HA Supervisor (ingress proxy) -> Addon container
+               |
+               |-- Validates HA session
+               |-- Injects X-Remote-User-ID header
+               |-- Injects X-Remote-User-Name header
+               +-- Injects X-Remote-User-Display-Name header
+                                          |
+                                          v
                               HomeAssistantAuth middleware
-                                          │
-                                          ├─ Verifies SUPERVISOR_TOKEN
-                                          ├─ User::firstOrCreate(...)
-                                          └─ Auth::login($user)
+                                          |
+                                          |-- Verifies SUPERVISOR_TOKEN
+                                          |-- User::firstOrCreate(...)
+                                          +-- Auth::login($user)
 ```
 
 The addon only handles **identity**. Each Laravel app manages its own
 roles, permissions, and authorization through its own UI and models.
+
+## Code Updates
+
+App code lives in `/data/app/` and is synced with the remote on every restart:
+
+```
+git fetch origin <branch> --depth 1
+git reset --hard origin/<branch>
+```
+
+This guarantees the running code always matches the remote. Local edits are
+discarded. To update your app, push to your repo and restart the addon.
+
+Dependencies (`composer install`, `npm ci`) are only re-run when
+`composer.lock` or `package-lock.json` change (hash comparison). Even when
+they do change, download caches in `/data/.composer-cache/` and
+`/data/.npm-cache/` keep reinstalls fast.
+
+## What Persists Across Restarts
+
+| Path | Contents |
+|---|---|
+| `/data/.asdf/` | Compiled PHP and Node.js runtimes |
+| `/data/app/` | Cloned Laravel application code |
+| `/data/.app_key` | Laravel APP_KEY |
+| `/data/database.sqlite` | SQLite database (if used) |
+| `/data/.composer-cache/` | Composer download cache |
+| `/data/.npm-cache/` | npm download cache |
+| `/data/.lockfile-hashes` | Dependency lockfile hashes |
 
 ## Service Auto-Discovery
 
@@ -114,7 +169,8 @@ Each call to `generate.sh` creates an independent addon with its own slug:
 ```
 
 Each addon appears separately in the HA Add-on Store and can be configured,
-started, and stopped independently.
+started, and stopped independently. Apps can share a Redis instance by using
+different `redis_db` numbers (0-15).
 
 ## Repository Structure
 
@@ -123,11 +179,13 @@ started, and stopped independently.
 ├── generate.sh              # Creates new addon instances
 ├── template/
 │   ├── config.json.tpl      # Addon config template
-│   ├── Dockerfile           # Generic Laravel runner image
-│   ├── run.sh               # Startup script
+│   ├── build.json           # HA base image mapping (Alpine)
+│   ├── Dockerfile           # Alpine + ASDF runtime image
+│   ├── run.sh               # Startup script (ASDF + git sync + Laravel)
 │   ├── discover.sh          # Service auto-discovery
 │   ├── nginx.conf           # Nginx config with HA header passthrough
-│   ├── php.ini              # PHP configuration
+│   ├── php.ini              # PHP configuration overrides
+│   ├── php-fpm.conf         # PHP-FPM pool configuration
 │   ├── supervisord.conf     # Base Supervisor config
 │   └── overlay/
 │       ├── app/Http/Middleware/

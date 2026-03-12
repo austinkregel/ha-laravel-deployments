@@ -14,6 +14,13 @@
   "options": {
     "git_url": "",
     "git_branch": "main",
+    "php_version": "8.4",
+    "node_version": "20",
+    "php_extensions": [
+      "mbstring", "xml", "curl", "zip", "bcmath", "intl", "gd",
+      "soap", "gettext", "sqlite3", "mysql", "pgsql", "redis",
+      "opcache", "fpm"
+    ],
     "db_connection": "sqlite",
     "db_host": "",
     "db_port": 3306,
@@ -29,6 +36,9 @@
   "schema": {
     "git_url": "url?",
     "git_branch": "str",
+    "php_version": "str",
+    "node_version": "str",
+    "php_extensions": ["str"],
     "db_connection": "list(sqlite|mysql|mariadb|pgsql)",
     "db_host": "str?",
     "db_port": "port",

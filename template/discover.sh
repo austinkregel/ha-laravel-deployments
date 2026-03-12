@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-APP_DIR="${1:-/var/www/html}"
+APP_DIR="${1:-/data/app}"
 CONF_DIR="/etc/supervisor/conf.d"
 CONF_FILE="$CONF_DIR/laravel.conf"
 
@@ -30,7 +30,7 @@ command=${command}
 directory=${APP_DIR}
 autostart=true
 autorestart=true
-user=www-data
+user=nginx
 redirect_stderr=true
 stdout_logfile=/var/log/supervisor/${name}.log
 stopwaitsecs=60
@@ -38,7 +38,6 @@ EOF
   echo "  [discover] + $name: $command"
 }
 
-# Supervisor programs that must run as root
 add_program_root() {
   local name="$1"
   local command="$2"
@@ -101,12 +100,10 @@ NEEDS_QUEUE=""
 [ -f "$APP_DIR/app/Console/Kernel.php" ] && NEEDS_SCHEDULER="yes"
 [ -f "$APP_DIR/routes/console.php" ] && NEEDS_SCHEDULER="yes"
 
-# Packages that force-enable the scheduler
 for p in "$TELESCOPE" "$SANCTUM" "$BACKUP" "$HEALTH" "$ACTIVITYLOG" "$MEDIALIBRARY"; do
   [ -n "$p" ] && NEEDS_SCHEDULER="yes"
 done
 
-# Packages that force-enable a queue worker
 for p in "$MEDIALIBRARY" "$BACKUP" "$SCOUT"; do
   [ -n "$p" ] && NEEDS_QUEUE="yes"
 done
@@ -130,7 +127,8 @@ echo "[discover] Scanning $APP_DIR for services..."
 if [ -n "$OCTANE" ]; then
   add_program "octane" "php artisan octane:start --host=0.0.0.0 --port=8099"
 else
-  add_program_root "php-fpm" "/usr/sbin/php-fpm8.4 --nodaemonize"
+  PHP_FPM_BIN="$(which php-fpm 2>/dev/null || echo php-fpm)"
+  add_program_root "php-fpm" "${PHP_FPM_BIN} --nodaemonize --fpm-config /opt/ha-laravel/php-fpm.conf"
   add_program_root "nginx" "/usr/sbin/nginx -g 'daemon off;'"
 fi
 
